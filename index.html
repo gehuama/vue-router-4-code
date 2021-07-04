@@ -12,9 +12,9 @@
 </head>
 
 <body>
-  <button onclick="history.push('/')">首页</button>
-  <button onclick="history.push('/about')">关于我</button>
-  <button onclick="history.push('/xxx')">替换</button>
+  <button onclick="routerHistory.push('/')">首页</button>
+  <button onclick="routerHistory.push('/about')">关于我</button>
+  <button onclick="routerHistory.push('/xxx')">替换</button>
   <script>
     // 前端路由的实现原理，两种模式，一种hash模式，一种history模式 
     // h5api:
@@ -78,15 +78,15 @@
           { forward: to, scroll: { left: window.pageXOffset, top: window.pageYOffset } }
         )
         // 本质没有跳转的 只是更新了状态，后续在vue中我可以详细的监控到状态的变化
-        changeLocation(currentState.current,currentState,true)
+        changeLocation(currentState.current, currentState, true)
 
         const state = Object.assign(
           {},
-          buildState(currentLocation.value,to,null),
-          {position: currentState.position + 1},
+          buildState(currentLocation.value, to, null),
+          { position: currentState.position + 1 },
           data
         )
-        changeLocation(to,state,false); // 真正的更改路径
+        changeLocation(to, state, false); // 真正的更改路径
         changeLocation.value = to;
 
         // 跳转后 从这到了哪
@@ -94,7 +94,7 @@
       function replace(to, data) {
         const state = Object.assign(
           {},
-          buildState(historyState.value.back, to, historyState.value.forward,true),
+          buildState(historyState.value.back, to, historyState.value.forward, true),
           data
         )
         changeLocation(to, state, true);
@@ -109,17 +109,61 @@
       console.log(historyState.value);
     }
 
+    // 前进后退的时候 要更新historyState，currentLocation 这两个变量
+    function useHistoryListeners(historyState, currentLocation) {
+      let listeners = [];
+      const popStateHandler = ({ state }) => { // 最新的状态，已经前进后退 完成后的状态
+        const to = createCurrentLocation(); // 去哪
+        const from = currentLocation.value; // 从哪来
+        const fromState = historyState.value; // 从哪来的状态
+
+        currentLocation.value = to;
+        historyState.value = state; // state 可能会为null
+
+        let isBack = state.position - fromState.position < 0 // 判断是前进还是后退
+
+        // 用户在这里扩展......
+        listeners.forEach(listener => {
+          listener(to, from, { isBack })
+        });
+        console.log(state);
+      };
+      window.addEventListener('popstate', popStateHandler) //只能监听浏览器前进后退
+      function listen(cb) {
+        listeners.push(cb)
+      }
+      return {
+        listen
+      }
+    }
+    // 1. 路由系统最基本的得包含当前的路径，当前路径下地状态是什么 需要提供两个切换路径的方法 push replace
+    // 2.   实现路由监听，如果路径变化 需要通知用户
     function createWebHistory() {
       // 1. 路由系统最基本的得包含当前的路径，当前路径下地状态是什么 需要提供两个切换路径的方法 push replace
       const historyNavigation = useHistoryStateNavigation();
-      return {
-        ...historyNavigation
-      }
+
+      // 2. 实现路由监听，如果路径变化 需要通知用户
+      const historyListeners = useHistoryListeners(historyNavigation.state, historyNavigation.location);
+
+      const routerHistory = Object.assign(
+        {},
+        historyNavigation,
+        historyListeners
+      )
+      Object.defineProperty(routerHistory, 'location', {
+        get: () => historyNavigation.location.value
+      })
+      Object.defineProperty(routerHistory, 'state', {
+        get: () => historyNavigation.state.value
+      })
+      return routerHistory;
     }
 
-    const history = createWebHistory()
-      // 1. 路由系统最基本的得包含当前的路径，当前路径下地状态是什么 需要提供两个切换路径的方法 push replace
-      // 实现路由监听，如果路径变化 需要通知用户
+    const routerHistory = createWebHistory()
+    console.log(routerHistory.location,routerHistory.state)
+    routerHistory.listen((to, from, { isBack }) => {
+      console.log(to, from, isBack);
+    })
   </script>
 </body>
 
