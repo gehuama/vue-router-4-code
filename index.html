@@ -47,13 +47,17 @@
         position: window.history.length - 1
       }
     }
-    function createCurrentLocation() {
+    function createCurrentLocation(base) {
       const { pathname, search, hash } = window.location;
+      const hasPos = base.indexOf('#'); // 就是hash模式  / /about #/ #/about
+      if (hasPos > -1) {
+        return base.slice(1) || '/';
+      }
       return pathname + search + hash
     }
-    function useHistoryStateNavigation() {
+    function useHistoryStateNavigation(base) {
       const currentLocation = {
-        value: createCurrentLocation()
+        value: createCurrentLocation(base)
       }
       const historyState = {
         value: window.history.state
@@ -65,7 +69,9 @@
         console.log(buildState(null, currentLocation.value, null, true));
       }
       function changeLocation(to, state, replace) {
-        window.history[replace ? 'replaceState' : 'pushState'](state, null, to);
+        const hasPos = base.indexOf('#');
+        const url = hasPos > -1 ? base + to : to
+        window.history[replace ? 'replaceState' : 'pushState'](state, null, url);
         historyState.value = state; // 将自己生成的状态同步到了 路由系统中
       }
       function push(to, data) { // 去哪，带的新的状态是谁？
@@ -110,10 +116,10 @@
     }
 
     // 前进后退的时候 要更新historyState，currentLocation 这两个变量
-    function useHistoryListeners(historyState, currentLocation) {
+    function useHistoryListeners(base, historyState, currentLocation) {
       let listeners = [];
       const popStateHandler = ({ state }) => { // 最新的状态，已经前进后退 完成后的状态
-        const to = createCurrentLocation(); // 去哪
+        const to = createCurrentLocation(base); // 去哪
         const from = currentLocation.value; // 从哪来
         const fromState = historyState.value; // 从哪来的状态
 
@@ -138,12 +144,12 @@
     }
     // 1. 路由系统最基本的得包含当前的路径，当前路径下地状态是什么 需要提供两个切换路径的方法 push replace
     // 2. 实现路由监听，如果路径变化 需要通知用户
-    function createWebHistory() {
+    function createWebHistory(base = '') {
       // 1. 路由系统最基本的得包含当前的路径，当前路径下地状态是什么 需要提供两个切换路径的方法 push replace
-      const historyNavigation = useHistoryStateNavigation();
+      const historyNavigation = useHistoryStateNavigation(base);
 
       // 2. 实现路由监听，如果路径变化 需要通知用户
-      const historyListeners = useHistoryListeners(historyNavigation.state, historyNavigation.location);
+      const historyListeners = useHistoryListeners(base, historyNavigation.state, historyNavigation.location);
 
       const routerHistory = Object.assign(
         {},
@@ -158,9 +164,12 @@
       })
       return routerHistory;
     }
-
-    const routerHistory = createWebHistory()
-    console.log(routerHistory.location,routerHistory.state)
+    function createWebHashHistory() {
+      return createWebHistory('#')
+    }
+    const routerHistory = createWebHashHistory()
+    // const routerHistory = createWebHistory()
+    console.log(routerHistory.location, routerHistory.state)
     routerHistory.listen((to, from, { isBack }) => {
       console.log(to, from, isBack);
     })
