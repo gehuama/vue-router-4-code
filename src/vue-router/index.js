@@ -10,7 +10,7 @@ import { createWebHistory } from "./history/html5";
 // 当用户访问 /a 的时候 会渲染Home 和A
 
 // 格式化用户的参数
-function normalizeRouteRecord(record) { 
+function normalizeRouteRecord(record) {
   return {
     path: record.path, // 状态机 解析路径的分数，算出匹配规则
     meta: record.meta || {},
@@ -41,7 +41,7 @@ function createRouterMatcher(routes) {
   const matchers = [];
   function addRoute(route, parent) {
     let normalizedRecord = normalizeRouteRecord(route);
-    if(parent){
+    if (parent) {
       normalizedRecord.path = parent.path + normalizedRecord.path;
     }
     const matcher = createRouteRecordMatcher(normalizedRecord, parent);
@@ -54,7 +54,9 @@ function createRouterMatcher(routes) {
     matchers.push(matcher);
   }
   routes.forEach((route) => addRoute(route));
-  console.log(matcher);
+  return {
+    addRoute, // 动态添加路由， 面试问 路由如何动态添加 就是这个api
+  };
 }
 
 function createRouter(options) {
@@ -78,6 +80,9 @@ function createRouter(options) {
           () =>
             <div>{slots}</div>,
       });
+      // 后面还有逻辑
+
+      // 解析路径 RouterLink RouterView 实现 页面钩子 从离开到进入 到解析完成
     },
   };
   return router;
