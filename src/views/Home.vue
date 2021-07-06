@@ -19,8 +19,8 @@ export default {
     // HelloWorld,
   },
   mounted() {
-    console.log(this.$router);
-    console.log(this.$route);
+    // console.log(this.$router);
+    // console.log(this.$route);
   },
 };
 </script>

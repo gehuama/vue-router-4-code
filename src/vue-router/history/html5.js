@@ -60,7 +60,6 @@ function useHistoryStateNavigation(base) {
       buildState(null, currentLocation.value, null, true),
       true
     );
-    console.log(buildState(null, currentLocation.value, null, true));
   }
   function changeLocation(to, state, replace) {
     const hasPos = base.indexOf("#");
@@ -110,7 +109,6 @@ function useHistoryStateNavigation(base) {
     push,
     replace,
   };
-  // console.log(historyState.value);
 }
 
 // 前进后退的时候 要更新historyState，currentLocation 这两个变量
@@ -131,7 +129,6 @@ function useHistoryListeners(base, historyState, currentLocation) {
     listeners.forEach((listener) => {
       listener(to, from, { isBack });
     });
-    console.log(state);
   };
   window.addEventListener("popstate", popStateHandler); //只能监听浏览器前进后退
   function listen(cb) {
