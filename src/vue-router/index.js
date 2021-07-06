@@ -1,6 +1,7 @@
 import { createWebHashHistory } from "./history/hash";
 import { createWebHistory } from "./history/html5";
 import { shallowRef, computed, reactive, unref } from "vue";
+import { RouterLink } from "./router-link";
 
 // 数据处理 option.routes 是用户的配置 ，难理解不好维护
 // /  => record {Home}
@@ -99,14 +100,27 @@ function createRouter(options) {
       return matcher.resolve({ path: to });
     }
   }
-
-  function finalizeNavigation(to, from) {
-    if (from === START_LOCATION_NORMALIZED) {
+  let ready;
+  // 用来标记已经渲染完毕
+  function markAsRead() {
+    if (ready) return;
+    ready = true;
+    routerHistory.listen((to) => {
+      const targetLocation = resolve(to);
+      const from = currentRoute.value;
+      finalizeNavigation(targetLocation, from, true); // 在切换前进后退，采用替换模式replaced 不是push模式
+    });
+  }
+  function finalizeNavigation(to, from, replaced) {
+    if (from === START_LOCATION_NORMALIZED || replaced) {
       routerHistory.replace(to.path);
     } else {
       routerHistory.push(to.path);
     }
     currentRoute.value = to; // 更新最新的路径
+
+    markAsRead();
+    // 如果是初始化我们还需要注入一个listen 去更新currentRoute的值，这样数据变化后可以更新重新渲染
   }
   // 通过路径匹配到对应的记录，更新currentRoute
   function pushWithRedirect(to) {
@@ -140,24 +154,18 @@ function createRouter(options) {
       for (let key in START_LOCATION_NORMALIZED) {
         reactiveRoute[key] = computed(() => currentRoute.value[key]);
       }
-      // vuex const store = useStore();
-      app.provide("router", router); // 暴露路由对象
-      app.provide("route location", reactive(reactiveRoute)); // 用于实现 useApi
-      // let router = useRouter(); // inject('router');
-      // let route = useRoute(); // inject('route location');
-      app.component("RouterLink", {
-        setup:
-          (_props, { slots }) =>
-          () =>
-            <a>{slots.default && slots.default()}</a>,
-      });
+      app.component("RouterLink", RouterLink);
       app.component("RouterView", {
         setup:
           (_props, { slots }) =>
           () =>
             <div>{slots}</div>,
       });
-
+      // vuex const store = useStore();
+      app.provide("router", router); // 暴露路由对象
+      app.provide("route location", reactive(reactiveRoute)); // 用于实现 useApi
+      // let router = useRouter(); // inject('router');
+      // let route = useRoute(); // inject('route location');
       if (currentRoute.value == START_LOCATION_NORMALIZED) {
         // 默认初始化 ， 需要通过路由系统先进行一次跳转 发生匹配
         push(routerHistory.location);
