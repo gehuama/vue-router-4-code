@@ -25,6 +25,10 @@ const routes = [
         }, // jsx
       },
     ],
+    beforeEnter: (to) => {
+      // ...
+      console.log("beforeEnter", to);
+    },
   },
   {
     path: "/about",
@@ -39,4 +43,36 @@ const router = createRouter({
   routes,
 });
 
+router.beforeEach((to) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("beforeEach1", to);
+      resolve();
+    }, 1000);
+  });
+});
+router.beforeEach((to) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("beforeEach2", to);
+      resolve();
+    }, 1000);
+  });
+});
+router.beforeEach((to) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("beforeEach3", to);
+      resolve();
+    }, 1000);
+  });
+});
+router.beforeResolve((to) => {
+  // to and from are both route objects. must call `next`.
+  console.log("beforeResolve", to);
+});
+router.afterEach((to) => {
+  // to and from are both route objects.
+  console.log("afterEach", to);
+});
 export default router;
