@@ -41,11 +41,7 @@ function extractChangeRecords(to, from) {
     const recordFrom = from.matched[i];
     if (recordFrom) {
       // 如果去的和来的都有 那么就是要更新
-      if (
-        to.matched.find((record) => {
-          record.path == recordFrom.path;
-        })
-      ) {
+      if (to.matched.find((record) => record.path == recordFrom.path)) {
         updatingRecords.push(recordFrom);
       } else {
         // 如果去的有，离开的没有，那么就是离开
@@ -55,11 +51,7 @@ function extractChangeRecords(to, from) {
     const recordTo = to.matched[i];
     if (recordTo) {
       // 如果来的里面不包含去的 那么就是要进入
-      if (
-        !from.matched.find((record) => {
-          record.path == recordTo.path;
-        })
-      ) {
+      if (!from.matched.find((record) => record.path == recordTo.path)) {
         enteringRecords.push(recordTo);
       }
     }
@@ -160,7 +152,7 @@ function createRouter(options) {
     );
     return runGuardQueue(guards)
       .then(() => {
-        // 全局路由钩子 beforeEnter
+        // 全局路由钩子 beforeEach
         guards = [];
         for (const guard of beforeGuards.list()) {
           guards.push(guardToPromise(guard, to, from, guard));

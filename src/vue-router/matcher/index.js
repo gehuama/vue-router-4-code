@@ -3,7 +3,7 @@ function normalizeRouteRecord(record) {
   return {
     path: record.path, // 状态机 解析路径的分数，算出匹配规则
     meta: record.meta || {},
-    beforeEnter: record.beforeEnter || {},
+    beforeEnter: record.beforeEnter,
     name: record.name,
     components: {
       default: record.component, // 循环
